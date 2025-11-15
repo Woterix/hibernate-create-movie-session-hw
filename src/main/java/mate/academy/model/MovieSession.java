@@ -23,13 +23,14 @@ public class MovieSession {
     private CinemaHall cinemaHall;
     private LocalDateTime showtime;
 
-    public Long getId() {
-        return id;
-    }
-
     @Override
     public String toString() {
-        return super.toString();
+        return "MovieSession{" + "id=" + id + ", movie=" + movie
+                + ", cinemaHall=" + cinemaHall + ", showtime=" + showtime + '}';
+    }
+
+    public Long getId() {
+        return id;
     }
 
     public void setId(Long id) {

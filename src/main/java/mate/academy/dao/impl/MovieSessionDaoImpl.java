@@ -1,16 +1,21 @@
 package mate.academy.dao.impl;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
+import java.util.Optional;
+import mate.academy.dao.MovieSessionDao;
 import mate.academy.exception.DataProcessingException;
+import mate.academy.lib.Dao;
 import mate.academy.model.MovieSession;
-import mate.academy.service.MovieSessionService;
 import mate.academy.util.HibernateUtil;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.hibernate.query.Query;
 
-public class MovieSessionDaoImpl implements MovieSessionService {
+@Dao
+public class MovieSessionDaoImpl implements MovieSessionDao {
     @Override
     public MovieSession add(MovieSession movieSession) {
         Session session = null;
@@ -35,9 +40,9 @@ public class MovieSessionDaoImpl implements MovieSessionService {
     }
 
     @Override
-    public MovieSession get(Long id) {
+    public Optional<MovieSession> get(Long id) {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
-            return session.get(MovieSession.class, id);
+            return Optional.ofNullable(session.get(MovieSession.class, id));
         } catch (Exception e) {
             throw new DataProcessingException("Can't get movieSession from DB", e);
         }
@@ -45,13 +50,16 @@ public class MovieSessionDaoImpl implements MovieSessionService {
 
     @Override
     public List<MovieSession> findAvailableSessions(Long movieId, LocalDate date) {
+        LocalDateTime startOfDay = date.atStartOfDay();
+        LocalDateTime endOfDay = date.atTime(LocalTime.MAX);
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             Query<MovieSession> query = session.createQuery("from MovieSession m "
                     + "left join fetch m.movie v "
                     + "where v.id = :movieId and "
-                    + "m.showtime > :showtime", MovieSession.class);
+                    + "m.showtime >= :showtime and m.showtime <= :showtime2", MovieSession.class);
             query.setParameter("movieId", movieId);
-            query.setParameter("showtime", date);
+            query.setParameter("showtime", startOfDay);
+            query.setParameter("showtime2", endOfDay);
             return query.getResultList();
         } catch (Exception e) {
             throw new DataProcessingException("Can't get Available Sessions for movie with ID: "
